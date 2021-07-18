@@ -1,38 +1,78 @@
-
 <?php 
- if(isset($_POST['submit']))
-{
-    $mob='91'.$_POST['mobile'];
-    $sub=$_POST['subject'];
-      $msg=$_POST['msg'];
-       $email=$_POST['email'];
-    $name=$_POST['name'];
+    //Import PHPMailer classes into the global namespace
+    //These must be at the top of your script, not inside a function
+    use PHPMailer\PHPMailer\PHPMailer;
+    use PHPMailer\PHPMailer\SMTP;
+    use PHPMailer\PHPMailer\Exception;
+    //Load Composer's autoloader
+    require 'vendor/autoload.php';
 
-  
-    $apiKey = urlencode('NmMzNDU2MzE2YTVhMzE0NDQzMzE2NjYyNDg1MzRkNmI=');
+   class SendMessageAsEmail{
+        private $mail;
+        function __construct(){
+            try {
+                $this->mail = new PHPMailer(true);
+                $this->mail->isSMTP();                                      
+                $this->mail->Host       = 'smtp.gmail.com';                 
+                $this->mail->SMTPAuth   = true;                             
+                $this->mail->Username   = 'prafull.chavan.dev@gmail.com';  // <- change email address here
+                $this->mail->Password   = 'OBIWAN@kenobi1234';             // <- change Password here
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;     
+                $this->mail->Port       = 465;  
+                //$this->mail->setFrom('prafull.chavan.dev@gmail.com', 'Mailer');                            
+            }catch (Exception $e) {
+                echo "Connection Failed {$mail->ErrorInfo}";
+            }
+        }
+        function sendMessage($subject,$message,$sender,$isHTML=true){
+            if (isset($message) && isset($sender) && isset($subject) ) {
+                try {        
+                    $this->mail->setFrom($sender, 'Mailer');
+                    $this->mail->addAddress($sender, 'Joe User'); 
+                    $this->mail->isHTML($isHTML);                                  //Set email format to HTML
+                    $this->mail->Subject = $subject;
+                    $this->mail->Body    = $message;
+                    $this->mail->AltBody = $message;
+                    $this->mail->send();
+                } catch (Exception $e) {
+                    echo "Message not sent {$mail->ErrorInfo}";
+                }
+            }
+            
+        }
+   }
+
+    if(isset($_POST['submit']))
+    {
+        $mobileNo   =   strip_tags('91'.$_POST['mobile']);
+        $subject    =   strip_tags($_POST['subject']);
+        $message    =   strip_tags($_POST['msg']);
+        $email  =   $_POST['email'];
+        $name   =   $_POST['name'];
+
+        $emailBody = "Subject is $subject <br />
+                    <b>Message:-</b><br />$message<br /><br />
+                    Mobile No. of Person is $mobileNo <br /> 
+                    Email is $email ";
+
+        $obj = new SendMessageAsEmail();
+        $obj->sendMessage($name." wants to contact",$emailBody,'prafull.chavan.dev@gmail.com'); // <- change email address here
+    }
     
-  
-    $numbers = array(9373801143);
-    $sender = urlencode($name);
-    $message = rawurlencode($msg);
- 
-    $numbers = implode(',', $numbers);
- 
-  
-    $data = array('apikey' => $apiKey, 'numbers' => $numbers, "sender" => $name, "message" =>$msg );
- 
-
-    $ch = curl_init('https://api.textlocal.in/send/');
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
+    //echo '<script>window.location.href = "http://www.w3schools.com";</script>'; // <- change link here to contact us page
+    /**
+     * 1. Allow access to less secure apps.-> no
+     * 2. Make sure that two step authentication is disabled.
+     */
+    /**
+     * 1. 6 digit random number as otp
+     * 2. send as email to user
+     * 3. user enters otp
+     * 4. match otp with generated otp
+     * 5. if match contact us page 
+     * 6. warning message that otp is wrong
+     */
     
-    // Process your response here
-    echo $response;
-
-}
 ?> 
 
 
@@ -173,8 +213,7 @@
             <input type="text" class="form-control" name="subject" placeholder="Enter subject" required="required">
         </div>
         <div class="form-group">
-            <textarea class="form-control" name="msg" placeholder="Enter Message" required="required">
-            </textarea>
+            <textarea class="form-control" name="msg" placeholder="Enter Message" required="required"></textarea>
         </div>
           
        
